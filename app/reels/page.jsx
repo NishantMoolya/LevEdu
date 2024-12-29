@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react'
 import ReelPlayer from "@/components/reels/ReelPlayer";
 // import sampleVideo from "@/public/assets/video1.mp4";
 import useFetch from '../../hooks/useFetch';
+import { useSelector } from 'react-redux';
 
 const page = () => {
   
@@ -11,10 +12,13 @@ const page = () => {
 
   const [reelsData,setReelsData] = useState([]);
 
+  const userId = useSelector(state => state.user.userId);
+
   useEffect(() => {
     try {
 
-      createData(`${process.env.NEXT_PUBLIC_API_BASE_URL}/video`, 'GET', null, 200).then(res => {
+      // createData(`${process.env.NEXT_PUBLIC_API_BASE_URL}/video`, 'GET', null, 200).then(res => {
+      createData(`${process.env.NEXT_PUBLIC_API_BASE_URL}/video/recommendations/${userId}`, 'GET', null, 200).then(res => {
         if (!res) {
           throw new Error('An error occured while fetching topics');
         } else {

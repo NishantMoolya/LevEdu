@@ -98,14 +98,14 @@ const Video = ({ video, active, videoid, userId, likes, username, videosLikedLis
     };
 
     return (
-        <div className='w-full h-full snap-start relative rounded overflow-hidden' onDoubleClick={handleLikes} onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
+        <div className='w-full h-full snap-start relative rounded overflow-hidden' onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
             {showFlashCard ? <div className="bg-white h-full py-4 px-2">
                 <FlashCard description={video.description} rsrc_url={video.rsrc_url} topic={"hello"} prerequisites={video?.prerequisites} tags={video?.tags} />
             </div>
                 : <>
                     {/* video */}
-                    {video?.vid_url.startsWith("https") ? <video ref={videoRef} onClick={playVideo} onPause={handleVideoPause} onEnded={handleVideoEnd} className='w-full h-full object-fill z-10 relative' src={video?.vid_url} onTimeUpdate={handleTimeLineProgress}></video>
-                        : <div className='w-full h-full object-fill z-10 relative text-white text-center font-semibold flex items-center justify-center'>Video source url is not proper</div>}
+                    {video?.vid_url.startsWith("https") ? <video ref={videoRef} onDoubleClick={handleLikes} onClick={playVideo} onPause={handleVideoPause} onEnded={handleVideoEnd} className='w-full h-full object-fill z-10 relative' src={video?.vid_url} onTimeUpdate={handleTimeLineProgress}></video>
+                        : <div onDoubleClick={handleLikes} className='w-full h-full object-fill z-10 relative text-white text-center font-semibold flex items-center justify-center'>Video source url is not proper</div>}
                     {/* video elements container */}
                     <div className='absolute top-0 bottom-0 right-0 left-0 bg-transparent text-white'>
                         {/* dropdown box */}
