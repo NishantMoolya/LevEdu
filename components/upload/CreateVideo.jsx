@@ -37,10 +37,20 @@ const CreateVideo = ({ quiz_id, flashcard_id }) => {
   const handleChange = (e) => {
     const { name, value, files } = e.target;
     if (files) {
-      setFormData({
-        ...formData,
-        [name]: files[0]
-      });
+      const video = document.createElement("video");
+      video.preload = "metadata";
+      let durationInSeconds = 1;
+      video.onloadedmetadata = function () {
+        window.URL.revokeObjectURL(video.src); // Free up memory
+        durationInSeconds = Math.round(video.duration); // Get video duration
+        // console.log(`Video Duration: ${durationInSeconds} seconds`);
+        setFormData({
+          ...formData,
+          [name]: files[0],
+          vid_len:durationInSeconds
+        });
+      };
+      video.src = URL.createObjectURL(files[0]);
     } else {
       setFormData({
         ...formData,
@@ -51,102 +61,19 @@ const CreateVideo = ({ quiz_id, flashcard_id }) => {
 
   const userId = useSelector(state => state.user.userId);
 
-  // const handleSubmit = async (e) => {
-  //   try {
-  //     e.preventDefault();
-  //     console.log(formData);
-  //     setLoading(true);
-
-  //     const storageRef = ref(storage, `files/${formData.thumbnail_url.name}`);
-  //     const uploadTask = uploadBytesResumable(storageRef, formData.thumbnail_url);
-
-  //     uploadTask.on(
-  //       "state_changed",
-  //       (snapshot) => {
-  //         const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-  //       },
-  //       (error) => {
-  //         console.error("Upload failed:", error);
-  //       },
-  //       () => {
-  //         getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
-  //           console.log("File available at:", downloadURL);
-  //           setFormData({
-  //             ...formData,
-  //             thumbnail_url: downloadURL
-  //           });
-  //         });
-  //       }
-  //     );
-
-  //     const vidstorageRef = ref(storage, `files/${formData.vid_url.name}`);
-  //     const uploadVidTask = uploadBytesResumable(vidstorageRef, formData.vid_url);
-
-  //     uploadVidTask.on(
-  //       "state_changed",
-  //       (snapshot) => {
-  //         const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-  //       },
-  //       (error) => {
-  //         console.error("Upload failed:", error);
-  //       },
-  //       () => {
-  //         getDownloadURL(uploadVidTask.snapshot.ref).then((downloadURL) => {
-  //           console.log("File available at:", downloadURL);
-  //           setFormData({
-  //             ...formData,
-  //             vid_url: downloadURL
-  //           });
-  //         });
-  //       }
-  //     );
-
-  //     console.log(formData.thumbnail_url, formData.vid_url);
-      
-  //     if (formData.vid_url.length == 0 || formData.thumbnail_url.length == 0) {
-  //       throw new Error('An error occured while uploading video or thumbnail');
-  //     }
-
-  //     const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
-  //     const payload = {
-  //       edu_id: userId,
-  //       flashcard_id: parseInt(formData.flashcard_id),
-  //       quiz_id: parseInt(formData.quiz_id),
-  //       top_id: parseInt(formData.top_id),
-  //       vid_url: formData.vid_url,
-  //       thumbnail_url: formData.thumbnail_url,
-  //       tags: formData.tags,
-  //       prerequisites: formData.prerequisites,
-  //       description: formData.description,
-  //       vid_len: 1,
-  //     }
-
-  //     const res = await createData(baseUrl + '/video', 'POST', payload, 201);
-  //     console.log(res);
-
-  //     if (!res) {
-  //       throw new Error('An error occured while creating quiz');
-  //     }
-  //   } catch (err) {
-  //     console.log("an error occured", err);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-
   const handleSubmit = async (e) => {
     try {
       e.preventDefault();
       console.log(formData);
       setLoading(true);
-  
+
       // Create an array of promises for both uploads
       const uploadPromises = [];
-  
+
       // Upload thumbnail
-      const storageRef = ref(storage, `files/${formData.thumbnail_url.name}`);
+      const storageRef = ref(storage, `files/${formData.thumbnail_url.name}_${Date.now()}`);
       const uploadTask = uploadBytesResumable(storageRef, formData.thumbnail_url);
-      
+
       const thumbnailUploadPromise = new Promise((resolve, reject) => {
         uploadTask.on(
           "state_changed",
@@ -166,13 +93,13 @@ const CreateVideo = ({ quiz_id, flashcard_id }) => {
           }
         );
       });
-  
+
       uploadPromises.push(thumbnailUploadPromise);
-  
+
       // Upload video
       const vidstorageRef = ref(storage, `files/${formData.vid_url.name}`);
       const uploadVidTask = uploadBytesResumable(vidstorageRef, formData.vid_url);
-  
+
       const videoUploadPromise = new Promise((resolve, reject) => {
         uploadVidTask.on(
           "state_changed",
@@ -192,24 +119,24 @@ const CreateVideo = ({ quiz_id, flashcard_id }) => {
           }
         );
       });
-  
+
       uploadPromises.push(videoUploadPromise);
-  
+
       // Wait for both uploads to complete
       const [thumbnailUrl, videoUrl] = await Promise.all(uploadPromises);
-  
+
       // Update formData with the retrieved URLs
       setFormData({
         ...formData,
         thumbnail_url: thumbnailUrl,
         vid_url: videoUrl,
       });
-  
+
       // Check if URLs are valid
       if (!thumbnailUrl || !videoUrl) {
         throw new Error('An error occurred while uploading video or thumbnail');
       }
-  
+
       // Prepare payload for API request
       const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
       const payload = {
@@ -222,14 +149,14 @@ const CreateVideo = ({ quiz_id, flashcard_id }) => {
         tags: formData.tags,
         prerequisites: formData.prerequisites,
         description: formData.description,
-        vid_len: 1,
+        vid_len: formData.vid_len,
       };
-  
+
       // Send data to backend
       const res = await createData(baseUrl + '/video', 'POST', payload, 201);
-      
+
       console.log(res);
-  
+
       if (!res) {
         throw new Error('An error occurred while creating quiz');
       }
@@ -239,7 +166,7 @@ const CreateVideo = ({ quiz_id, flashcard_id }) => {
       setLoading(false);
     }
   };
-  
+
   const [topics, setTopics] = useState([]);
 
   useEffect(() => {

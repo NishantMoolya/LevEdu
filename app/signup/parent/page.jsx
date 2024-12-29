@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import useFetch from '../../../hooks/useFetch';
 
 const indianStates = [
   "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa", "Gujarat", 
@@ -26,7 +27,7 @@ const ParentSignUp = () => {
 
   const router = useRouter();
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleInputChange = (e) => {
     const { name, value } = e.target;
     setParentData((prevData) => ({
       ...prevData,
@@ -34,22 +35,29 @@ const ParentSignUp = () => {
     }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const createData = useFetch();
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-
-    const response = await fetch("/api/signup/parent", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(parentData),
-    });
-
-    if (response.ok) {
-      router.push("/parent-dashboard");
-    } else {
-      alert("Failed to sign up. Please try again.");
+    try {
+    const payload = {
+      par_name:parentData.name,
+        par_email:parentData.email,
+        par_password:parentData.password,
+        city:parentData.city,
+        street:parentData.street,
+        state:parentData.state
     }
+    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+    const res = await createData(baseUrl+'/user/student/signup', 'POST', payload, 201);
+
+    if (!res) {
+      throw new Error('An error occured while creating educator');
+    }else router.push('/login');
+  } catch (err) {
+    console.log("en error occurred");
+    alert("an error");
+  }
   };
 
   return (

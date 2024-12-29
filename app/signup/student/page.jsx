@@ -38,7 +38,7 @@ const StudentSignUp = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+    try {
     const payload = {
       stud_name:studentData.name,
         stud_email:studentData.email,
@@ -54,6 +54,10 @@ const StudentSignUp = () => {
     if (!res) {
       throw new Error('An error occured while creating educator');
     }else router.push('/login');
+  } catch (err) {
+    console.log("en error occurred");
+    alert("an error");
+  }
   };
 
   return (
@@ -128,8 +132,8 @@ const StudentSignUp = () => {
           >
             <option value="">Select Class</option>
             <option value="1">Standard 8</option>
-            <option value="1">Standard 9</option>
-            <option value="1">Standard 10</option>
+            <option value="2">Standard 9</option>
+            <option value="3">Standard 10</option>
             {/* Add other standards as per your SQL schema */}
           </select>
           <button
